@@ -8,9 +8,18 @@
   <div class="grid">
     <article class="card">
       <h2>Importer</h2>
-      <label>Titre<input [formControl]="title" /></label>
-      <label>Fichier audio<input type="file" accept="audio/*" (change)="choose($event)" /></label>
-      <button type="button" (click)="upload()" [disabled]="!file">Envoyer</button>
+
+      @if (error()) {
+        <p class="alert">{{ error() }}</p>
+      }
+
+      @if (success()) {
+        <p class="success">{{ success() }}</p>
+      }
+
+      <label>Titre<input [formControl]="title" [disabled]="uploading()" /></label>
+      <label>Fichier audio<input type="file" accept="audio/*" (change)="choose($event)" [disabled]="uploading()" /></label>
+      <button type="button" (click)="upload()" [disabled]="!file || uploading()">Envoyer</button>
     </article>
 
     <article class="card">
@@ -18,28 +27,31 @@
         <h2>Mes pistes</h2>
         <button type="button" (click)="load()">Actualiser</button>
       </div>
+
       @if (loading()) {
         <p>Chargement…</p>
       }
-      @for (track of tracks(); track track.id) {
-        <div class="track">
-          <div>
-            <b>{{ track.title }}</b>
-            <small>{{ track.originalName }} · {{ track.size }} Ko</small>
-          </div>
-          <button type="button" (click)="play(track)" [attr.aria-label]="'Lire ' + track.title">▶</button>
-        </div>
-      } @empty {
-        <p>Aucune piste.</p>
+
+      @if (!loading()) {
+        @for (track of tracks(); track track.id) {
+          <article class="track">
+            <div class="track-main">
+              <b>{{ track.title }}</b>
+              <small>{{ track.originalName }} · {{ track.size }} Ko</small>
+            </div>
+            <button type="button" (click)="play(track)" [attr.aria-label]="'Lire ' + track.title">Lire</button>
+          </article>
+        } @empty {
+          <p>Aucune piste.</p>
+        }
       }
+
       <div class="pager">
         <button type="button" (click)="go(page() - 1)" [disabled]="page() === 1">Préc.</button>
         <span>Page {{ page() }} / {{ pages() }}</span>
         <button type="button" (click)="go(page() + 1)" [disabled]="page() === pages()">Suiv.</button>
       </div>
-      @if (audioUrl()) {
-        <audio [src]="audioUrl()" controls autoplay></audio>
-      }
     </article>
   </div>
+
 </section>

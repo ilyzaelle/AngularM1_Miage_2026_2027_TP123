@@ -1,15 +1,174 @@
-<header>
-  <div>
+<header class="topbar">
+  <div class="brand">
     <b>Guitar Practice Cloud</b>
     <small>Le cloud qui manque à votre ampli</small>
   </div>
-  <nav aria-label="Navigation principale">
-    <a routerLink="/tracks">Backing tracks</a>
-    <a routerLink="/profile">Profil</a>
-    <a routerLink="/login">Connexion</a>
+
+  <nav class="main-nav" aria-label="Navigation principale">
+    @if (auth.token()) {
+      <div class="nav-actions">
+        <a class="nav-link" routerLink="/tracks" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Backing tracks</a>
+        <a class="nav-link" routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ profileLabel() }}</a>
+      </div>
+
+      <button class="logout-button" type="button" (click)="logout()" aria-label="Se déconnecter" title="Se déconnecter">
+        <i class="pi pi-sign-out" aria-hidden="true"></i>
+      </button>
+    } @else {
+      <div class="nav-actions auth-actions">
+        <a class="nav-link" routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Connexion</a>
+        <a class="nav-link" routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inscription</a>
+      </div>
+    }
   </nav>
 </header>
 
 <main>
   <router-outlet />
 </main>
+
+@if (playerVisible()) {
+  <footer class="player-bar" [class.transitioning]="player.isTransitioning()">
+    <div class="player-left">
+      <div class="album-art" aria-hidden="true">
+        <i class="pi pi-music"></i>
+      </div>
+      <div class="player-meta">
+        <strong class="meta-title" [class.marquee]="titleOverflow()"><span #metaTitle>{{ player.currentTrack()?.title }}</span></strong>
+        <small class="meta-subtitle" [class.marquee]="subtitleOverflow()"><span #metaSubtitle>{{ player.currentTrack()?.originalName }}</span></small>
+      </div>
+    </div>
+
+    <div class="player-center">
+      <div class="player-controls">
+        <button type="button" class="player-button" (click)="toggleShuffle()" [class.active]="player.isShuffle()" aria-label="Lecture aléatoire">
+          <i class="pi pi-sort-alt" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="player-button" (click)="previousTrack()" aria-label="Piste précédente">
+          <i class="pi pi-step-backward" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="player-button primary" (click)="togglePlayback()" aria-label="Lecture ou pause">
+          <i class="pi" [class.pi-play]="!player.isPlaying()" [class.pi-pause]="player.isPlaying()" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="player-button" (click)="nextTrack()" aria-label="Piste suivante">
+          <i class="pi pi-step-forward" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="player-button" (click)="toggleLoop()" [class.active]="player.isLoop()" aria-label="Lecture en boucle">
+          <i class="pi pi-sync" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="timeline-row">
+        <span>{{ formatTime(player.currentTime()) }}</span>
+        <input
+          type="range"
+          min="0"
+          [max]="player.duration() || 0"
+          [value]="player.currentTime()"
+          [style.--percent]="sliderPercent(player.currentTime(), player.duration()) + '%'"
+          (input)="onSeek($any($event.target).valueAsNumber)"
+          aria-label="Avancer dans la piste"
+        />
+        <span>{{ formatTime(player.duration()) }}</span>
+      </div>
+    </div>
+
+    <div class="player-right">
+      <div class="volume-wrap">
+        <i class="pi pi-volume-up" aria-hidden="true"></i>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          [value]="player.volume()"
+          [style.--percent]="sliderPercent(player.volume(), 1) + '%'"
+          (input)="onVolumeChange($any($event.target).valueAsNumber)"
+          aria-label="Volume"
+        />
+      </div>
+
+      <button type="button" class="player-button" (click)="toggleFullscreen()" aria-label="Plein écran">
+        <i class="pi pi-window-maximize" aria-hidden="true"></i>
+      </button>
+    </div>
+  </footer>
+}
+
+@if (player.isFullscreen() && player.currentTrack()) {
+  <div class="fullscreen-overlay" (click)="closeFullscreen()">
+    <div class="fullscreen-panel" (click)="$event.stopPropagation()">
+      <button type="button" class="close-fullscreen" (click)="closeFullscreen()" aria-label="Fermer le plein écran">
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+
+      <div class="fullscreen-art" aria-hidden="true">
+        <i class="pi pi-music"></i>
+      </div>
+
+      <div class="fullscreen-content">
+        <h2 class="fullscreen-title" [class.marquee]="fullscreenTitleOverflow()"><span #fullscreenTitle>{{ player.currentTrack()?.title }}</span></h2>
+        <p class="fullscreen-subtitle" [class.marquee]="fullscreenSubtitleOverflow()"><span #fullscreenSubtitle>{{ player.currentTrack()?.originalName }}</span></p>
+      </div>
+
+      <div class="fullscreen-controls">
+        <div class="timeline-row large">
+          <span>{{ formatTime(player.currentTime()) }}</span>
+          <input
+            type="range"
+            min="0"
+            [max]="player.duration() || 0"
+            [value]="player.currentTime()"
+            [style.--percent]="sliderPercent(player.currentTime(), player.duration()) + '%'"
+            (input)="onSeek($any($event.target).valueAsNumber)"
+            aria-label="Avancer dans la piste en plein écran"
+          />
+          <span>{{ formatTime(player.duration()) }}</span>
+        </div>
+
+        <div class="player-controls">
+          <button type="button" class="player-button" (click)="toggleShuffle()" [class.active]="player.isShuffle()" aria-label="Lecture aléatoire">
+            <i class="pi pi-sort-alt" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="player-button" (click)="previousTrack()" aria-label="Piste précédente">
+            <i class="pi pi-step-backward" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="player-button primary" (click)="togglePlayback()" aria-label="Lecture ou pause">
+            <i class="pi" [class.pi-play]="!player.isPlaying()" [class.pi-pause]="player.isPlaying()" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="player-button" (click)="nextTrack()" aria-label="Piste suivante">
+            <i class="pi pi-step-forward" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="player-button" (click)="toggleLoop()" [class.active]="player.isLoop()" aria-label="Lecture en boucle">
+            <i class="pi pi-sync" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="volume-wrap fullscreen-volume">
+          <i class="pi pi-volume-up" aria-hidden="true"></i>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            [value]="player.volume()"
+            [style.--percent]="sliderPercent(player.volume(), 1) + '%'"
+            (input)="onVolumeChange($any($event.target).valueAsNumber)"
+            aria-label="Volume en plein écran"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<audio
+  data-player="app"
+  [src]="player.audioUrl()"
+  (timeupdate)="onTimeUpdate()"
+  (loadedmetadata)="onLoadedMetadata()"
+  (play)="player.isPlaying.set(true)"
+  (pause)="player.isPlaying.set(false)"
+  (ended)="onEnded()"
+  autoplay
+></audio>
