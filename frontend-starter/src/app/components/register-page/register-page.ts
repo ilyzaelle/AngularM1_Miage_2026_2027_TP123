@@ -13,16 +13,39 @@ export class RegisterPageComponent {
   private readonly router = inject(Router);
 
   readonly error = signal('');
-  
+
   readonly form = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-    password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
   });
 
   submit(): void {
-    const values = this.form.getRawValue();
-    this.auth.register(values.name, values.email, values.password).subscribe({
+    const rawValues = this.form.getRawValue();
+    const sanitizedValues = {
+      name: rawValues.name.trim(),
+      email: rawValues.email.trim(),
+      password: rawValues.password.trim(),
+    };
+
+    this.form.setValue(sanitizedValues);
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error.set('Merci de corriger les champs indiqués.');
+      return;
+    }
+
+    this.auth.register(sanitizedValues.name, sanitizedValues.email, sanitizedValues.password).subscribe({
       next: () => {
         console.debug('[RegisterPage] Inscription réussie');
         void this.router.navigateByUrl('/profile');

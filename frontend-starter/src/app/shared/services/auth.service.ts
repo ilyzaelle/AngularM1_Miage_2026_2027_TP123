@@ -8,9 +8,14 @@ import { User } from '../models/user.model';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private isHydratingSession = true;
 
   readonly currentUser = signal<User | null>(null);
   readonly token = signal<string | null>(localStorage.getItem('gpc_token'));
+
+  constructor() {
+    this.hydrateSession();
+  }
 
   login(email: string, password: string) {
     return this.http
@@ -37,9 +42,36 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearSession();
+  }
+
+  clearSession(): void {
     localStorage.removeItem('gpc_token');
     this.token.set(null);
     this.currentUser.set(null);
+  }
+
+  isSessionHydrating(): boolean {
+    return this.isHydratingSession;
+  }
+
+  private hydrateSession(): void {
+    const savedToken = localStorage.getItem('gpc_token');
+    if (!savedToken) {
+      this.isHydratingSession = false;
+      return;
+    }
+
+    this.token.set(savedToken);
+    this.profile().subscribe({
+      next: (user) => {
+        this.currentUser.set(user);
+        this.isHydratingSession = false;
+      },
+      error: () => {
+        this.isHydratingSession = false;
+      },
+    });
   }
 
   private storeAuthentication(response: AuthResponse): void {

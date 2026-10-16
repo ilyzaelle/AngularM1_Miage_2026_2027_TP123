@@ -25,8 +25,21 @@ export class LoginPageComponent {
   });
 
   submit(): void {
-    const values = this.form.getRawValue();
-    this.auth.login(values.email, values.password).subscribe({
+    const rawValues = this.form.getRawValue();
+    const sanitizedValues = {
+      email: rawValues.email.trim(),
+      password: rawValues.password.trim(),
+    };
+
+    this.form.setValue(sanitizedValues);
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error.set('Merci de corriger les champs indiqués.');
+      return;
+    }
+
+    this.auth.login(sanitizedValues.email, sanitizedValues.password).subscribe({
       next: () => {
         console.debug('[LoginPage] Connexion réussie');
         void this.router.navigateByUrl('/tracks');
