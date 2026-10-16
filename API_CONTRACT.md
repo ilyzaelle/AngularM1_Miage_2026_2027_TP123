@@ -1,4 +1,4 @@
-# Contrat HTTP - TP1
+# Contrat HTTP - TP1 à TP3
 
 Base : `/api`. Sauf inscription et connexion, envoyer `Authorization: Bearer <token>`.
 
@@ -12,10 +12,15 @@ Le contrat HTTP ne dépend pas du choix de persistance : le backend fourni utili
 | GET | `/users/me` | JWT | `200 User` |
 | PUT | `/users/me` | `{name}` + JWT | `200 User` |
 | GET | `/tracks?page=1&limit=5` | JWT | `Page<Track>` |
-| POST | `/tracks` | multipart : `audio`, `title` | `201 Track` |
+| POST | `/tracks` | multipart : `audio`, `title` | `201 Track` avec événements upload progressifs côté frontend |
 | GET | `/tracks/:id/audio` | JWT | flux audio |
-| DELETE | `/tracks/:id` | JWT | `204` (bonus) |
+| DELETE | `/tracks/:id` | JWT | `204` |
 
 `Page<Track>` contient `items`, `page`, `limit`, `total` et `pages`. Formats acceptés : MP3, WAV, OGG et M4A, 25 Mo maximum.
 
-Erreurs courantes : `400` validation, `401` authentification, `404` ressource, `409` email déjà utilisé.
+Pour la partie TP3, l’upload est traité côté frontend via `HttpClient` avec `reportProgress: true` et `observe: 'events'`. Les événements `UploadProgress` servent à afficher un pourcentage sans modifier le contrat HTTP backend. La suppression d’une piste utilise `DELETE /api/tracks/:id` et demande une confirmation côté UI avant exécution.
+
+Erreurs courantes : `400` validation, `401` authentification, `404` ressource, `409` email déjà utilisé, `500` erreur serveur interne.
+
+Signaux: stockés en mémoire dans le navigateur
+localStorage: stockés dans le stockage du navigateur en dur

@@ -1,3 +1,4 @@
+import { HttpEventType } from '@angular/common/http';
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Track } from '../../shared/models/track.model';
@@ -18,8 +19,10 @@ export class TracksPageComponent {
   readonly pages = signal(1);
   readonly loading = signal(false);
   readonly uploading = signal(false);
+  readonly uploadProgress = signal(0);
   readonly error = signal('');
   readonly success = signal('');
+  readonly deletingId = signal<string | null>(null);
   readonly title = new FormControl('', { nonNullable: true });
   file?: File;
 
@@ -79,21 +82,33 @@ export class TracksPageComponent {
     this.error.set('');
     this.success.set('');
     this.uploading.set(true);
+    this.uploadProgress.set(0);
 
     this.service.upload(this.file, cleanTitle).subscribe({
-      next: (track) => {
-        console.debug('[TracksPage] Piste envoyée', track.id);
-        this.title.setValue('');
-        this.file = undefined;
-        this.uploading.set(false);
-        this.page.set(1);
-        this.load();
-        this.success.set('Piste envoyée avec succès.');
+      next: (event) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          this.uploadProgress.set(percent);
+          return;
+        }
+
+        if (event.type === HttpEventType.Response && event.body) {
+          const track = event.body;
+          console.debug('[TracksPage] Piste envoyée', track.id);
+          this.title.setValue('');
+          this.file = undefined;
+          this.uploadProgress.set(100);
+          this.uploading.set(false);
+          this.page.set(1);
+          this.load();
+          this.success.set('Piste envoyée avec succès.');
+        }
       },
       error: (error) => {
         console.error('[TracksPage] Envoi impossible', error);
-        this.error.set(error.error?.message ?? 'L’envoi du fichier a échoué. Vérifiez le fichier et réessayez.');
+        this.error.set('L’envoi du fichier a échoué. Vérifiez le fichier et réessayez.');
         this.uploading.set(false);
+        this.uploadProgress.set(0);
       },
     });
   }
@@ -155,4 +170,27 @@ export class TracksPageComponent {
     this.player.onEnded();
   }
 
+  deleteTrack(id: string): void {
+    if (this.deletingId() === id) return;
+    const confirmed = window.confirm('Voulez-vous vraiment supprimer cette piste ?');
+    if (!confirmed) return;
+
+    this.deletingId.set(id);
+    this.error.set('');
+    this.success.set('');
+
+    this.service.delete(id).subscribe({
+      next: () => {
+        console.debug('[TracksPage] Piste supprimée', id);
+        this.deletingId.set(null);
+        this.load();
+        this.success.set('Piste supprimée avec succès.');
+      },
+      error: (error) => {
+        console.error('[TracksPage] Suppression impossible', error);
+        this.error.set(error.error?.message ?? 'Impossible de supprimer cette piste.');
+        this.deletingId.set(null);
+      },
+    });
+  }
 }

@@ -17,6 +17,10 @@
         <p class="success">{{ success() }}</p>
       }
 
+      @if (uploading()) {
+        <p class="progress">Upload en cours : {{ uploadProgress() }}%</p>
+      }
+
       <label>Titre<input [formControl]="title" [disabled]="uploading()" /></label>
       <label>Fichier audio<input type="file" accept="audio/*" (change)="choose($event)" [disabled]="uploading()" /></label>
       <button type="button" (click)="upload()" [disabled]="!file || uploading()">Envoyer</button>
@@ -39,7 +43,18 @@
               <b>{{ track.title }}</b>
               <small>{{ track.originalName }} · {{ track.size }} Ko</small>
             </div>
-            <button type="button" (click)="play(track)" [attr.aria-label]="'Lire ' + track.title">Lire</button>
+            <div class="actions">
+              <button type="button" (click)="play(track)" [attr.aria-label]="'Lire ' + track.title">Lire</button>
+              <button
+                type="button"
+                class="danger"
+                (click)="deleteTrack(track.id)"
+                [disabled]="deletingId() === track.id"
+                [attr.aria-label]="'Supprimer ' + track.title"
+              >
+                {{ deletingId() === track.id ? 'Suppression…' : 'Supprimer' }}
+              </button>
+            </div>
           </article>
         } @empty {
           <p>Aucune piste.</p>

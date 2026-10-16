@@ -50,6 +50,16 @@ Ouvrir `http://localhost:4200`. Le compte de démonstration est
 - [RAPPORT_IA_MODELE.md](RAPPORT_IA_MODELE.md) : modèle de compte rendu.
 - [CONSEILS_POUR_UTIISER_ASSISTANT_AI.md](CONSEILS_POUR_UTIISER_ASSISTANT_AI.md) : utiliser correctement un assistant IA, quel que soit l’outil choisi.
 
+## État actuel du projet
+
+Le projet couvre les missions TP1, TP2 et TP3 suivantes :
+
+- authentification : inscription, connexion, JWT, session locale, garde de route, 401 et rechargement de profil ;
+- profil utilisateur : affichage et édition du nom ;
+- bibliothèque audio : liste paginée, upload, lecture sécurisée, suppression avec confirmation ;
+- qualité de service : progression d’upload via `HttpEventType.UploadProgress` ;
+- tests frontend : composants et flux d’authentification / upload / suppression.
+
 Le backend contient également ses propres consignes pour les assistants :
 [`backend/AGENTS.md`](backend/AGENTS.md), [`backend/CLAUDE.md`](backend/CLAUDE.md),
 [`backend/GEMINI.md`](backend/GEMINI.md) et
