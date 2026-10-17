@@ -1,38 +1,78 @@
-# Guitar Practice Cloud — package étudiant
+# Guitar Practice Cloud
 
-Ce dépôt contient uniquement les ressources nécessaires aux trois TP :
-`backend/` et `frontend-starter/`, ainsi que les sujets et documents utiles.
+## Réalisation
 
-## Prérequis
+**Léo RODRIGUEZ — M1 MIAGE SIRIS, année 2026-2027**
 
-- Node.js 22 ou plus récent ;
-- un compte MongoDB Atlas par binôme ;
-- Git et un navigateur récent.
-- Un IDE de qualité
-- Recommandé : un abonnement à un 
+## Présentation
 
-Consulter [ATLAS_SETUP.md](ATLAS_SETUP.md) pour créer la base de données.
+Guitar Practice Cloud est une application web qui permet de gérer et d’écouter
+des pistes audio pour accompagner le travail musical. Un utilisateur peut créer
+un compte, se connecter, modifier son profil et gérer sa bibliothèque de
+morceaux : importer des fichiers audio, les renommer, les écouter ou les
+supprimer.
 
-## Démarrer le backend
+Le lecteur propose les commandes de lecture, une playlist et plusieurs
+visualisations audio, notamment le spectre fréquentiel, l’oscilloscope et les
+figures de Chladni. Les préférences de visualisation sont enregistrées avec le
+profil.
+
+## Architecture de l’application
+
+L’application se compose d’un frontend Angular et d’un backend Node.js /
+Express, reliés par une API REST :
+
+```text
+Navigateur
+└── frontend-starter/ — Angular
+    ├── pages : connexion, inscription, profil et bibliothèque audio
+    ├── services : authentification, pistes et lecteur
+    └── garde de routes et intercepteur JWT
+             │ requêtes HTTP /api
+             ▼
+backend/ — Node.js et Express
+    ├── API REST, authentification JWT et validation des requêtes
+    ├── modèles Mongoose : utilisateurs et pistes
+    └── fichiers audio dans data/uploads/
+             │ métadonnées
+             ▼
+         MongoDB Atlas
+```
+
+MongoDB Atlas conserve les utilisateurs et les métadonnées des pistes. Les
+fichiers audio sont stockés sur le disque du backend. En développement, Angular
+est servi sur `http://localhost:4200` et transmet les requêtes `/api` au
+backend, qui écoute sur `http://localhost:3000`.
+
+## Retrouver et lancer l’application
+
+Le code source est hébergé sur GitHub :
+[ilyzaelle/AngularM1_Miage_2026_2027_TP123](https://github.com/ilyzaelle/AngularM1_Miage_2026_2027_TP123).
+Pour récupérer le dépôt :
+
+```bash
+git clone https://github.com/ilyzaelle/AngularM1_Miage_2026_2027_TP123.git
+cd AngularM1_Miage_2026_2027_TP123
+```
+
+Il faut Node.js 22 ou une version plus récente, ainsi qu’une base MongoDB Atlas.
+Suivre [ATLAS_SETUP.md](ATLAS_SETUP.md) pour configurer cette base.
+
+Configurer puis démarrer le backend :
 
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Renseigner dans `.env` l’URI MongoDB Atlas et le secret JWT. Ne jamais publier
-ce fichier ni copier un secret dans le code Angular.
+Renseigner l’URI MongoDB Atlas et un secret JWT dans `backend/.env`, puis :
 
 ```bash
 npm install
 npm start
 ```
 
-Le backend écoute normalement sur `http://localhost:3000`.
-
-## Démarrer le frontend
-
-Dans un autre terminal :
+Dans un autre terminal, démarrer le frontend :
 
 ```bash
 cd frontend-starter
@@ -40,33 +80,5 @@ npm install
 npm start
 ```
 
-Ouvrir `http://localhost:4200`. Le compte de démonstration est
-`demo@example.com` / `Demo1234!`.
-
-## Documents de travail
-
-- [SUJET_ETUDIANT_TP1.md](SUJET_ETUDIANT_TP1.md), [SUJET_ETUDIANT_TP2.md](SUJET_ETUDIANT_TP2.md) et [SUJET_ETUDIANT_TP3.md](SUJET_ETUDIANT_TP3.md) : missions des trois séances ;
-- [API_CONTRACT.md](API_CONTRACT.md) : endpoints, authentification et formats échangés ;
-- [RAPPORT_IA_MODELE.md](RAPPORT_IA_MODELE.md) : modèle de compte rendu.
-- [CONSEILS_POUR_UTIISER_ASSISTANT_AI.md](CONSEILS_POUR_UTIISER_ASSISTANT_AI.md) : utiliser correctement un assistant IA, quel que soit l’outil choisi.
-
-## État actuel du projet
-
-Le projet couvre les missions TP1, TP2 et TP3 suivantes :
-
-- authentification : inscription, connexion, JWT, session locale, garde de route, 401 et rechargement de profil ;
-- profil utilisateur : affichage et édition du nom ;
-- bibliothèque audio : liste paginée, upload, lecture sécurisée, suppression avec confirmation ;
-- qualité de service : progression d’upload via `HttpEventType.UploadProgress` ;
-- tests frontend : composants et flux d’authentification / upload / suppression.
-
-Le backend contient également ses propres consignes pour les assistants :
-[`backend/AGENTS.md`](backend/AGENTS.md), [`backend/CLAUDE.md`](backend/CLAUDE.md),
-[`backend/GEMINI.md`](backend/GEMINI.md) et
-[`backend/best-practices.md`](backend/best-practices.md). Elles couvrent
-Node.js, Express, Mongoose, MongoDB, l’authentification, Multer, les uploads,
-les logs et les tests.
-
-Les fichiers audio présents dans `frontend-starter/fichiers-audio-de-test/` sont
-des fixtures fournies pour les essais. Aucun fichier uploadé, dossier de
-dépendances (`node_modules`), fichier `.env` ou identifiant local n’est inclus.
+Ouvrir ensuite [http://localhost:4200](http://localhost:4200) dans un
+navigateur. Ne pas publier le fichier `.env` ni ses secrets.
